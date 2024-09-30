@@ -1,0 +1,42 @@
+
+body {
+  margin: 0;
+}
+.top-bit {
+  display: block;
+  text-align: center;
+  background-color: lightgray;
+  height: 700px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-gap: 10px;
+    padding: 10px;
+    position: relative;
+  }
+  
+  .grid-item {
+    background-color: #f2f2f2;
+    text-align: center;
+    font-size: 16px;
+    user-select: none;
+    height: 90px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    animation-fill-mode: forwards;
+  }
+  
+  .grabbed {
+    background-color: greenyellow;
+  }
+
+/*   .elder, .younger {
+    background-color: aquamarine;
+  } */
