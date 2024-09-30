@@ -11,15 +11,20 @@ let youngerY = null;
 let shiftY = null;
 let startY = null;
 let currentYPos = null;
-let maxPos = null;
-let minPos = null;
+let containerBottom = null;
 let switchOffset = 0;
+let animating = false;
+
+let sticky = true;
 
 gridContainer.addEventListener("mousedown", (event) => {
   if (!event.target.classList.contains("grid-item")) {
     return;
   }
-  if (event.button !== 0) {
+  if (event.buttons !== 1) {
+    return;
+  }
+  if (animating) {
     return;
   }
   row = event.target;
@@ -30,10 +35,15 @@ gridContainer.addEventListener("mousedown", (event) => {
 
   shiftY = event.offsetY;
   startY = row.getBoundingClientRect().top;
+  containerBottom = gridContainer.offsetHeight - row.offsetHeight - padding;
+  console.log(containerBottom);
 });
 
 gridContainer.addEventListener("mousemove", (event) => {
   if (!row) {
+    return;
+  }
+  if (animating) {
     return;
   }
 
@@ -79,18 +89,44 @@ gridContainer.addEventListener("mousemove", (event) => {
 
   let mouseYRelToContainer = event.clientY - startY;
   currentYPos = mouseYRelToContainer + switchOffset - shiftY;
-  relativePos =
-    event.clientY - shiftY - gridContainer.getBoundingClientRect().top - 2;
+  containerPos =
+    event.clientY - shiftY - gridContainer.getBoundingClientRect().top;
 
-  row.style.top = currentYPos + "px";
-/*   if (currentYPos < -11) {
-    row.style.top = 0;
-  } */
-
-  console.log(relativePos, currentYPos, row.style.top);
+  if (containerPos < 0) {
+    row.parentNode.prepend(row);
+    row.style.top = -padding + "px";
+    currentYPos = -padding;
+  } else if (containerPos > containerBottom) {
+    row.parentNode.append(row);
+    row.style.top = padding + "px";
+    currentYPos = padding;
+  } else {
+    row.style.top = currentYPos + "px";
+  }
 });
 
 gridContainer.addEventListener("mouseup", (event) => {
+  release(event);
+});
+
+if (sticky) {
+  gridContainer.addEventListener("mouseenter", (event) => {
+    if (event.buttons !== 1) {
+      release(event);
+    }
+  });
+} else {
+  gridContainer.addEventListener("mouseleave", (event) => {
+    if (event.buttons == 1) {
+      release(event);
+    }
+  });
+}
+
+
+
+
+function release(event) {
   if (!row) {
     return;
   }
@@ -99,7 +135,7 @@ gridContainer.addEventListener("mouseup", (event) => {
     duration: 100,
     iterations: 1,
   };
-
+  animating = true;
   const snapAni = row.animate(snap, snapTiming);
   snapAni.onfinish = (event) => {
     row.style.top = 0 + "px";
@@ -110,8 +146,9 @@ gridContainer.addEventListener("mouseup", (event) => {
     startY = null;
     switchOffset = 0;
     currentYPos = 0;
+    animating = false;
   };
-});
+}
 
 function getImmediateSiblings(currentRow) {
   elder = currentRow.previousElementSibling;
