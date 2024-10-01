@@ -19,10 +19,9 @@ body {
   }
 
   .ape {
-    grid-row: 1 / 4;
     background-color: aquamarine;
     .grid-item {
-      height: 100px;
+      height: 50px;
     }
   }
   .tree {
