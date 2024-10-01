@@ -3,19 +3,18 @@ gridContainerStyles = getComputedStyle(gridContainer);
 let gap = parseInt(gridContainerStyles.getPropertyValue("gap"));
 let padding = parseInt(gridContainerStyles.getPropertyValue("padding"));
 
-let row = null;
-let elder = null;
-let elderY = null;
-let younger = null;
-let youngerY = null;
+let item = null;
+let itemAbove = null;
+let itemAboveY = null;
+let itemBelow = null;
+let itemBelowY = null;
 let shiftY = null;
 let startY = null;
-let currentYPos = null;
-let containerBottom = null;
+let itemLocalPosY = null;
 let switchOffset = 0;
 let animating = false;
 
-let sticky = true;
+let sticky = false;
 
 gridContainer.addEventListener("mousedown", (event) => {
   if (!event.target.classList.contains("grid-item")) {
@@ -27,82 +26,67 @@ gridContainer.addEventListener("mousedown", (event) => {
   if (animating) {
     return;
   }
-  row = event.target;
-  row.classList.add("grabbed");
-  row.style.zIndex = 1000;
+  item = event.target;
+  item.classList.add("grabbed");
+  item.style.zIndex = 1000;
 
-  getImmediateSiblings(row);
+  getImmediateSiblings(item);
 
   shiftY = event.offsetY;
-  startY = row.getBoundingClientRect().top;
-  containerBottom = gridContainer.offsetHeight - row.offsetHeight - padding;
-  console.log(containerBottom);
+  startY = item.getBoundingClientRect().top;
 });
 
 gridContainer.addEventListener("mousemove", (event) => {
-  if (!row) {
+  if (!item) {
     return;
   }
   if (animating) {
     return;
   }
 
-  if (elder) {
-    let switchCheck = row.getBoundingClientRect().top;
-    if (switchCheck <= elderY) {
-      let currentHeight = elder.offsetHeight;
-      switchOffset += gap + currentHeight;
-      row.parentNode.insertBefore(row, elder);
-      getImmediateSiblings(row);
-      const snap = [
-        { transform: `translate(0px, ${-currentHeight}px)` },
-        { transform: `translate(0px, 0px)` },
-      ];
-      const snapTiming = {
-        duration: 100,
-        iterations: 1,
-      };
+  if (itemAbove) {
+    let switchCheck = item.getBoundingClientRect().top;
+    if (switchCheck <= itemAboveY) {
+      let itemHeightSnapshot = itemAbove.offsetHeight;
+      switchOffset += gap + itemHeightSnapshot;
+      item.parentNode.insertBefore(item, itemAbove);
+      getImmediateSiblings(item);
 
-      younger.animate(snap, snapTiming);
+      animateSnap(itemBelow, -itemHeightSnapshot, 0, 150);
     }
   }
 
-  if (younger) {
-    let switchCheck = row.getBoundingClientRect().top;
-    if (switchCheck >= youngerY) {
-      let currentHeight = younger.offsetHeight;
-      switchOffset -= gap + currentHeight;
-      row.parentNode.insertBefore(younger, row);
-      getImmediateSiblings(row);
-      const snap = [
-        { transform: `translate(0px, ${currentHeight}px)` },
-        { transform: `translate(0px, 0px)` },
-      ];
-      const snapTiming = {
-        duration: 100,
-        iterations: 1,
-      };
+  if (itemBelow) {
+    let switchCheck = item.getBoundingClientRect().top;
+    if (switchCheck >= itemBelowY) {
+      let itemHeightSnapshot = itemBelow.offsetHeight;
+      switchOffset -= gap + itemHeightSnapshot;
+      item.parentNode.insertBefore(itemBelow, item);
+      getImmediateSiblings(item);
 
-      elder.animate(snap, snapTiming);
+      animateSnap(itemAbove, itemHeightSnapshot, 0, 150);
     }
   }
 
-  let mouseYRelToContainer = event.clientY - startY;
-  currentYPos = mouseYRelToContainer + switchOffset - shiftY;
-  containerPos =
+  itemLocalPosY = event.clientY - startY + switchOffset - shiftY;
+  
+  itemContainerPosY =
     event.clientY - shiftY - gridContainer.getBoundingClientRect().top;
 
-  if (containerPos < 0) {
-    row.parentNode.prepend(row);
-    row.style.top = -padding + "px";
-    currentYPos = -padding;
-  } else if (containerPos > containerBottom) {
-    row.parentNode.append(row);
-    row.style.top = padding + "px";
-    currentYPos = padding;
+  if (itemContainerPosY < 0) {
+    item.parentNode.prepend(item);
+    itemLocalPosY = -padding;
+    item.style.top = itemLocalPosY + "px";
+  } else if (itemContainerPosY > gridContainer.offsetHeight - item.offsetHeight) {
+    item.parentNode.append(item);
+    itemLocalPosY = padding;
+    item.style.top = itemLocalPosY + "px";
   } else {
-    row.style.top = currentYPos + "px";
+    item.style.top = itemLocalPosY + "px";
   }
+
+  getImmediateSiblings(item);
+  
 });
 
 gridContainer.addEventListener("mouseup", (event) => {
@@ -123,42 +107,48 @@ if (sticky) {
   });
 }
 
-
-
-
 function release(event) {
-  if (!row) {
+  if (!item) {
     return;
   }
-  const snap = [{ transform: `translate(0px, ${-currentYPos}px)` }];
-  const snapTiming = {
-    duration: 100,
-    iterations: 1,
-  };
-  animating = true;
-  const snapAni = row.animate(snap, snapTiming);
-  snapAni.onfinish = (event) => {
-    row.style.top = 0 + "px";
-    row.style.zIndex = 0;
-    row.classList.remove("grabbed");
-    row = null;
+  const snapAnimation = animateSnap(item, 0, -itemLocalPosY, 150);
+  snapAnimation.onfinish = () => {
+    item.style.top = 0 + "px";
+    item.style.zIndex = 0;
+    item.classList.remove("grabbed");
+    item = null;
     shiftY = null;
     startY = null;
     switchOffset = 0;
-    currentYPos = 0;
+    itemLocalPosY = 0;
     animating = false;
   };
 }
 
-function getImmediateSiblings(currentRow) {
-  elder = currentRow.previousElementSibling;
-  younger = currentRow.nextElementSibling;
-  if (elder) {
-    elder.classList.add("elder");
-    elderY = elder.getBoundingClientRect().top;
+function getImmediateSiblings(currentItem) {
+  itemAbove = currentItem.previousElementSibling;
+  itemBelow = currentItem.nextElementSibling;
+  if (itemAbove) {
+    itemAboveY = itemAbove.getBoundingClientRect().top;
   }
-  if (younger) {
-    younger.classList.add("younger");
-    youngerY = younger.getBoundingClientRect().top;
+  if (itemBelow) {
+    itemBelowY = itemBelow.getBoundingClientRect().top;
   }
+}
+
+function animateSnap(
+  thisItem,
+  startPosition,
+  endPosition,
+  durationMS
+) {
+  const snap = [
+    { transform: `translate(0px, ${startPosition}px)` },
+    { transform: `translate(0px, ${endPosition}px)` },
+  ];
+  const snapTiming = {
+    duration: durationMS,
+  };
+
+  return thisItem.animate(snap, snapTiming);
 }
