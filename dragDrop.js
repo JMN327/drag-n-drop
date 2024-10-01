@@ -1,4 +1,4 @@
-const gridContainer = document.querySelector(".grid-container");
+const gridContainer = document.querySelector(".grid-container.ape");
 const gridContainerStyles = getComputedStyle(gridContainer);
 let gap = parseInt(gridContainerStyles.getPropertyValue("gap"));
 let padding = parseInt(gridContainerStyles.getPropertyValue("padding"));
@@ -8,6 +8,7 @@ let itemAbove = null;
 let itemAboveY = null;
 let itemBelow = null;
 let itemBelowY = null;
+let gridContainerTop = null;
 let pointerOffset = null;
 let initialContainerPosY = null;
 let itemLocalPosY = null;
@@ -50,6 +51,7 @@ function pickUpGridItem(event) {
 
   getImmediateSiblings(item);
 
+  gridContainerTop = gridContainer.getBoundingClientRect().top
   pointerOffset = event.offsetY;
   initialContainerPosY = item.getBoundingClientRect().top;
 }
@@ -63,7 +65,9 @@ function moveGridItem(event) {
   }
 
   itemContainerPosY =
-    event.clientY - pointerOffset - gridContainer.getBoundingClientRect().top;
+    event.clientY - pointerOffset - gridContainerTop;
+
+  console.log(itemContainerPosY);
 
   if (itemAbove) {
     if (itemContainerPosY <= itemAboveY) {
@@ -96,7 +100,7 @@ function moveGridItem(event) {
     item.style.top = itemLocalPosY + "px";
   } else if (
     itemContainerPosY >
-    (gridContainer.offsetHeight - item.offsetHeight)
+    gridContainer.offsetHeight - item.offsetHeight
   ) {
     item.parentNode.append(item);
     itemLocalPosY = padding;
@@ -130,10 +134,14 @@ function getImmediateSiblings(currentItem) {
   itemAbove = currentItem.previousElementSibling;
   itemBelow = currentItem.nextElementSibling;
   if (itemAbove) {
-    itemAboveY = itemAbove.getBoundingClientRect().top;
+    itemAboveY =
+      itemAbove.getBoundingClientRect().top -
+      gridContainerTop;
   }
   if (itemBelow) {
-    itemBelowY = itemBelow.getBoundingClientRect().top;
+    itemBelowY =
+      itemBelow.getBoundingClientRect().top -
+      gridContainerTop;
   }
 }
 
