@@ -1,3 +1,7 @@
+body {
+  margin: 0;
+}
+
 .grid-container {
     display: grid;
     grid-template-columns: 1fr;
@@ -11,8 +15,8 @@
     text-align: center;
     font-size: 16px;
     user-select: none;
-    height: min-content;
-    padding: 30px;
+    height: 70px;
+    padding: 10px;
     border-radius: 15px;
     display: flex;
     justify-content: center;

@@ -1,5 +1,5 @@
 const gridContainer = document.querySelector(".grid-container");
-gridContainerStyles = getComputedStyle(gridContainer);
+const gridContainerStyles = getComputedStyle(gridContainer);
 let gap = parseInt(gridContainerStyles.getPropertyValue("gap"));
 let padding = parseInt(gridContainerStyles.getPropertyValue("padding"));
 
@@ -8,15 +8,33 @@ let itemAbove = null;
 let itemAboveY = null;
 let itemBelow = null;
 let itemBelowY = null;
-let shiftY = null;
-let startY = null;
+let pointerOffset = null;
+let initialContainerPosY = null;
 let itemLocalPosY = null;
 let switchOffset = 0;
 let animating = false;
 
 let sticky = false;
 
-gridContainer.addEventListener("mousedown", (event) => {
+gridContainer.addEventListener("mousedown", (event) => pickUpGridItem(event));
+gridContainer.addEventListener("mousemove", (event) => moveGridItem(event));
+gridContainer.addEventListener("mouseup", (event) => releaseGridItem(event));
+
+if (sticky) {
+  gridContainer.addEventListener("mouseenter", (event) => {
+    if (event.buttons !== 1) {
+      releaseGridItem(event);
+    }
+  });
+} else {
+  gridContainer.addEventListener("mouseleave", (event) => {
+    if (event.buttons == 1) {
+      releaseGridItem(event);
+    }
+  });
+}
+
+function pickUpGridItem(event) {
   if (!event.target.classList.contains("grid-item")) {
     return;
   }
@@ -32,11 +50,11 @@ gridContainer.addEventListener("mousedown", (event) => {
 
   getImmediateSiblings(item);
 
-  shiftY = event.offsetY;
-  startY = item.getBoundingClientRect().top;
-});
+  pointerOffset = event.offsetY;
+  initialContainerPosY = item.getBoundingClientRect().top;
+}
 
-gridContainer.addEventListener("mousemove", (event) => {
+function moveGridItem(event) {
   if (!item) {
     return;
   }
@@ -44,9 +62,10 @@ gridContainer.addEventListener("mousemove", (event) => {
     return;
   }
 
+  itemContainerPosY = item.getBoundingClientRect().top;
+
   if (itemAbove) {
-    let switchCheck = item.getBoundingClientRect().top;
-    if (switchCheck <= itemAboveY) {
+    if (itemContainerPosY <= itemAboveY) {
       let itemHeightSnapshot = itemAbove.offsetHeight;
       switchOffset += gap + itemHeightSnapshot;
       item.parentNode.insertBefore(item, itemAbove);
@@ -57,8 +76,7 @@ gridContainer.addEventListener("mousemove", (event) => {
   }
 
   if (itemBelow) {
-    let switchCheck = item.getBoundingClientRect().top;
-    if (switchCheck >= itemBelowY) {
+    if (itemContainerPosY >= itemBelowY) {
       let itemHeightSnapshot = itemBelow.offsetHeight;
       switchOffset -= gap + itemHeightSnapshot;
       item.parentNode.insertBefore(itemBelow, item);
@@ -68,16 +86,17 @@ gridContainer.addEventListener("mousemove", (event) => {
     }
   }
 
-  itemLocalPosY = event.clientY - startY + switchOffset - shiftY;
-  
-  itemContainerPosY =
-    event.clientY - shiftY - gridContainer.getBoundingClientRect().top;
+  itemLocalPosY =
+    event.clientY - initialContainerPosY + switchOffset - pointerOffset;
 
   if (itemContainerPosY < 0) {
     item.parentNode.prepend(item);
     itemLocalPosY = -padding;
     item.style.top = itemLocalPosY + "px";
-  } else if (itemContainerPosY > gridContainer.offsetHeight - item.offsetHeight) {
+  } else if (
+    itemContainerPosY >
+    gridContainer.offsetHeight - item.offsetHeight
+  ) {
     item.parentNode.append(item);
     itemLocalPosY = padding;
     item.style.top = itemLocalPosY + "px";
@@ -86,28 +105,9 @@ gridContainer.addEventListener("mousemove", (event) => {
   }
 
   getImmediateSiblings(item);
-  
-});
-
-gridContainer.addEventListener("mouseup", (event) => {
-  release(event);
-});
-
-if (sticky) {
-  gridContainer.addEventListener("mouseenter", (event) => {
-    if (event.buttons !== 1) {
-      release(event);
-    }
-  });
-} else {
-  gridContainer.addEventListener("mouseleave", (event) => {
-    if (event.buttons == 1) {
-      release(event);
-    }
-  });
 }
 
-function release(event) {
+function releaseGridItem(event) {
   if (!item) {
     return;
   }
@@ -117,8 +117,8 @@ function release(event) {
     item.style.zIndex = 0;
     item.classList.remove("grabbed");
     item = null;
-    shiftY = null;
-    startY = null;
+    pointerOffset = null;
+    initialContainerPosY = null;
     switchOffset = 0;
     itemLocalPosY = 0;
     animating = false;
@@ -136,12 +136,7 @@ function getImmediateSiblings(currentItem) {
   }
 }
 
-function animateSnap(
-  thisItem,
-  startPosition,
-  endPosition,
-  durationMS
-) {
+function animateSnap(thisItem, startPosition, endPosition, durationMS) {
   const snap = [
     { transform: `translate(0px, ${startPosition}px)` },
     { transform: `translate(0px, ${endPosition}px)` },
