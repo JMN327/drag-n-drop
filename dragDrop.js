@@ -62,7 +62,8 @@ function moveGridItem(event) {
     return;
   }
 
-  itemContainerPosY = item.getBoundingClientRect().top;
+  itemContainerPosY =
+    event.clientY - pointerOffset - gridContainer.getBoundingClientRect().top;
 
   if (itemAbove) {
     if (itemContainerPosY <= itemAboveY) {
@@ -95,7 +96,7 @@ function moveGridItem(event) {
     item.style.top = itemLocalPosY + "px";
   } else if (
     itemContainerPosY >
-    gridContainer.offsetHeight - item.offsetHeight
+    (gridContainer.offsetHeight - item.offsetHeight)
   ) {
     item.parentNode.append(item);
     itemLocalPosY = padding;
