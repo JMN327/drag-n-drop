@@ -1,4 +1,5 @@
 export function DragDropList() {
+  console.log("DragDropList Initiated")
   const gridContainerList = document.querySelectorAll(".grid-container");
   const gridContainerArray = [...gridContainerList];
 
@@ -18,13 +19,13 @@ export function DragDropList() {
     let itemBelowY = null;
     let gridContainerTop = null;
     let pointerOffset = null;
-    let initialContainerPosY = null;
+    let initialItemPosY = null;
     let itemContainerPosY = null;
     let itemLocalPosY = null;
     let switchOffset = 0;
     let animating = false;
 
-    let sticky = false;
+    let sticky = true;
 
     gridContainer.addEventListener("mousedown", (event) =>
       pickUpGridItem(event)
@@ -49,7 +50,8 @@ export function DragDropList() {
     }
 
     function pickUpGridItem(event) {
-      if (!event.target.closest(".grid-item")) {
+      item = event.target.closest(".grid-item");
+      if (!item) {
         return;
       }
       if (event.buttons !== 1) {
@@ -58,15 +60,13 @@ export function DragDropList() {
       if (animating) {
         return;
       }
-      item = event.target.closest(".grid-item");
+      
       item.classList.add("moving");
       item.style.zIndex = 1000;
-
-      getImmediateSiblings(item);
-
       gridContainerTop = gridContainer.getBoundingClientRect().top;
-      pointerOffset = event.offsetY;
-      initialContainerPosY = item.getBoundingClientRect().top;
+      initialItemPosY = item.getBoundingClientRect().top;
+      pointerOffset = event.clientY - initialItemPosY;
+      getImmediateSiblings(item);
     }
 
     function moveGridItem(event) {
@@ -102,7 +102,7 @@ export function DragDropList() {
       }
 
       itemLocalPosY =
-        event.clientY - initialContainerPosY + switchOffset - pointerOffset;
+        event.clientY - initialItemPosY + switchOffset - pointerOffset;
 
       if (itemContainerPosY < 0) {
         item.parentNode.prepend(item);
@@ -128,14 +128,20 @@ export function DragDropList() {
       }
       const snapAnimation = animateSnap(item, 0, -itemLocalPosY, 150);
       snapAnimation.onfinish = () => {
-        item.style.top = 0 + "px";
-        item.style.zIndex = 0;
+        item.style.top = null;
+        item.style.zIndex = null;
         item.classList.remove("moving");
         item = null;
+        itemAbove = null;
+        itemAboveY = null;
+        itemBelow = null;
+        itemBelowY = null;
+        gridContainerTop = null;
         pointerOffset = null;
-        initialContainerPosY = null;
+        initialItemPosY = null;
+        itemContainerPosY = null;
+        itemLocalPosY = null;
         switchOffset = 0;
-        itemLocalPosY = 0;
         animating = false;
       };
     }
