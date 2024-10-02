@@ -43,7 +43,7 @@ function makeDragNDrop(gridContainer) {
   }
 
   function pickUpGridItem(event) {
-    if (!event.target.classList.contains("grid-item")) {
+    if (!event.target.closest(".grid-item")) {
       return;
     }
     if (event.buttons !== 1) {
@@ -52,8 +52,8 @@ function makeDragNDrop(gridContainer) {
     if (animating) {
       return;
     }
-    item = event.target;
-    item.classList.add("grabbed");
+    item = event.target.closest(".grid-item");
+    item.classList.add("moving");
     item.style.zIndex = 1000;
 
     getImmediateSiblings(item);
@@ -72,8 +72,6 @@ function makeDragNDrop(gridContainer) {
     }
 
     itemContainerPosY = event.clientY - pointerOffset - gridContainerTop;
-
-    console.log(itemContainerPosY);
 
     if (itemAbove) {
       if (itemContainerPosY <= itemAboveY) {
@@ -126,7 +124,7 @@ function makeDragNDrop(gridContainer) {
     snapAnimation.onfinish = () => {
       item.style.top = 0 + "px";
       item.style.zIndex = 0;
-      item.classList.remove("grabbed");
+      item.classList.remove("moving");
       item = null;
       pointerOffset = null;
       initialContainerPosY = null;
