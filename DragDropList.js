@@ -10,7 +10,7 @@ export function DragDropList() {
   function makeDragNDrop(gridContainer) {
     const gridContainerStyles = getComputedStyle(gridContainer);
     let gap = parseInt(gridContainerStyles.getPropertyValue("gap"));
-    let padding = parseInt(gridContainerStyles.getPropertyValue("padding"));
+    let paddingTop = parseInt(gridContainerStyles.getPropertyValue("padding-top"));
 
     let item = null;
     let itemAbove = null;
@@ -106,14 +106,14 @@ export function DragDropList() {
 
       if (itemContainerPosY < 0) {
         item.parentNode.prepend(item);
-        itemLocalPosY = -padding;
+        itemLocalPosY = -paddingTop;
         item.style.top = itemLocalPosY + "px";
       } else if (
         itemContainerPosY >
         gridContainer.offsetHeight - item.offsetHeight
       ) {
         item.parentNode.append(item);
-        itemLocalPosY = padding;
+        itemLocalPosY = paddingTop;
         item.style.top = itemLocalPosY + "px";
       } else {
         item.style.top = itemLocalPosY + "px";
