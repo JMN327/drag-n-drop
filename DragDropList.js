@@ -76,6 +76,9 @@ export function DragDropList() {
       if (animating) {
         return;
       }
+      if (event.buttons !== 1) {
+        return;
+      }
 
       itemContainerPosY = event.clientY - pointerOffset - gridContainerTop;
 
